@@ -1,7 +1,7 @@
 import 'package:division/division.dart';
 import 'package:flutter/material.dart';
-import 'package:my_portfolio/utils/size_config.dart';
 
+import '../../utils/size_config.dart';
 import 'gradient_animation.dart';
 
 class AvatarWidget extends StatelessWidget {
@@ -18,13 +18,17 @@ class AvatarWidget extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Parent(
-                  style: ParentStyle()
-                    ..circle()
-                    ..margin(all: 10)
-                    ..background.image(imageProvider: AssetImage('assets/images/my_avatar.jpg')),
+                GradientAnimationWidget(),
+                IgnorePointer(
+                  child: Parent(
+                    style: ParentStyle()
+                      ..circle()
+                      ..margin(all: SizeConfig.height(20) * .02)
+                      ..background.image(
+                          imageProvider:
+                              AssetImage('assets/images/my_avatar.jpg')),
+                  ),
                 ),
-                GradientAnimationWidget()
               ],
             ),
           ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:mouse_parallax/mouse_parallax.dart';
 
 class HomeScreen extends StatelessWidget {
-  static final route = MaterialPageRoute(builder: (context) => const HomeScreen());
-
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
