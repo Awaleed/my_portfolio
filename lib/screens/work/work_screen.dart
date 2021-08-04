@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:division/division.dart';
 import 'package:flutter/material.dart';
+import 'package:my_portfolio/screens/cats/cats_screen.dart';
 import 'package:supercharged/supercharged.dart';
 
 int currentlyHoveredTile = -10, tileCount = 0;
@@ -18,6 +19,7 @@ class _WorkScreenState extends State<WorkScreen> {
   final ran = Random();
   int row = 4;
   int col = 6;
+  final keys = <GlobalKey<_AnimatedTileState>>[];
 
   late List<List<_TileInfo>> twoDList;
   late Timer animationTimer;
@@ -34,20 +36,22 @@ class _WorkScreenState extends State<WorkScreen> {
       col + 2,
       (i) => List.generate(
         row + 2,
-        (j) => _TileInfo(
-          tileCount++,
-          i - 1,
-          j - 1,
-          Colors.primaries[ran.nextInt(18)],
-        ),
+        (j) {
+          final key = GlobalKey<_AnimatedTileState>();
+          keys.add(key);
+          return _TileInfo(
+            tileCount++,
+            i - 1,
+            j - 1,
+            Colors.primaries[ran.nextInt(18)],
+            key: key,
+          );
+        },
       ),
     );
     animationTimer = Timer.periodic(
       (5000 + ran.nextDouble() * 1000).ceil().milliseconds,
-      // 300.milliseconds,
       (timer) async {
-        // animateVertical(1, true);
-
         await Future.delayed((ran.nextDouble() * 5000).ceil().milliseconds);
         if (moveVertically)
           animateVertical(ran.nextInt(col), ran.nextBool());
@@ -65,8 +69,15 @@ class _WorkScreenState extends State<WorkScreen> {
         else
           animateHorizontal(ran.nextInt(row), ran.nextBool());
         setState(() {});
+        await Future.delayed((5000 + ran.nextDouble() * 1000).ceil().milliseconds);
+        animateTile();
       },
     );
+  }
+
+  void animateTile() {
+    final randomTile = keys[ran.nextInt(keys.length)];
+    randomTile.currentState?.animate();
   }
 
   @override
@@ -105,8 +116,7 @@ class _WorkScreenState extends State<WorkScreen> {
   }
 
   List<Widget> _buildGrid(double height, double width) {
-    final children = <Widget>[];
-
+    final children = <AnimatedPositioned>[];
     for (var i = 0; i < twoDList.length; i++) {
       final row = twoDList[i];
       for (var j = 0; j < row.length; j++) {
@@ -114,6 +124,7 @@ class _WorkScreenState extends State<WorkScreen> {
 
         children.add(
           AnimatedPositioned(
+            key: tile.key,
             curve: Curves.easeOut,
             child: AnimatedTile(
               id: tile.id,
@@ -196,12 +207,13 @@ class _TileInfo {
   int id, dx, dy;
   Color color;
   bool movingBack;
-
+  GlobalKey<_AnimatedTileState> key;
   _TileInfo(
     this.id,
     this.dx,
     this.dy,
     this.color, {
+    required this.key,
     this.movingBack = false,
   });
 
@@ -210,8 +222,7 @@ class _TileInfo {
 }
 
 class AnimatedTile extends StatefulWidget {
-  const AnimatedTile({Key? key, required this.colors, required this.id})
-      : super(key: key);
+  const AnimatedTile({Key? key, required this.colors, required this.id}) : super(key: key);
   final int id;
   final List<Color> colors;
 
@@ -219,12 +230,11 @@ class AnimatedTile extends StatefulWidget {
   _AnimatedTileState createState() => _AnimatedTileState();
 }
 
-class _AnimatedTileState extends State<AnimatedTile>
-    with SingleTickerProviderStateMixin {
+class _AnimatedTileState extends State<AnimatedTile> with SingleTickerProviderStateMixin {
   AnimationController? animationController;
   late List<_AnimationInfo> animations;
   late int animationIndex, valueIndex;
-  Timer? animationTimer;
+  // Timer? animationTimer;
 
   final ran = Random();
 
@@ -237,8 +247,7 @@ class _AnimatedTileState extends State<AnimatedTile>
     );
     animationController!.curve(Curves.easeOut);
     animationController!.addListener(() {
-      if (animationController!.value >= .499 &&
-          animationController!.value <= .501) {
+      if (animationController!.value >= .499 && animationController!.value <= .501) {
         setState(() {
           valueIndex = ran.nextInt(widget.colors.length);
         });
@@ -270,27 +279,29 @@ class _AnimatedTileState extends State<AnimatedTile>
     valueIndex = ran.nextInt(widget.colors.length);
     animations[animationIndex].animate(animationController!);
 
-    animationTimer = Timer.periodic(
-      (5000 + ran.nextDouble() * 10000).ceil().milliseconds,
-      (timer) async {
-        await Future.delayed((ran.nextDouble() * 5000).ceil().milliseconds);
-        if (animationController == null) return;
-        if (widget.id != currentlyHoveredTile) {
-          animationIndex = ran.nextInt(animations.length);
-          animations[animationIndex].animate(animationController!);
-          await animationController!.forward(from: 0);
-        }
-        animationController!.reset();
-      },
-    );
+    // animationTimer = Timer.periodic(
+    //   (5000 + ran.nextDouble() * 10000).ceil().milliseconds,
+    //   (timer) async {},
+    // );
   }
 
   @override
   void dispose() {
-    animationTimer?.cancel();
+    // animationTimer?.cancel();
     animationController?.dispose();
     animationController = null;
     super.dispose();
+  }
+
+  Future<void> animate() async {
+    await Future.delayed((ran.nextDouble() * 5000).ceil().milliseconds);
+    if (animationController == null) return;
+    if (widget.id != currentlyHoveredTile) {
+      animationIndex = ran.nextInt(animations.length);
+      animations[animationIndex].animate(animationController!);
+      await animationController!.forward(from: 0);
+    }
+    animationController!.reset();
   }
 
   @override
@@ -413,8 +424,7 @@ class _AnimationInfo {
   final dynamic tween;
   late Animation _animation;
 
-  void animate(AnimationController controller) =>
-      _animation = tween.animate(controller);
+  void animate(AnimationController controller) => _animation = tween.animate(controller);
 
   Animation get animation => _animation;
   final Widget Function(BuildContext, Widget?, dynamic) builder;
