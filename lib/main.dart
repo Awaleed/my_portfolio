@@ -49,6 +49,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
+// new item 
+
 
       // locale: DevicePreview.locale(context),
       // builder: DevicePreview.appBuilder,
